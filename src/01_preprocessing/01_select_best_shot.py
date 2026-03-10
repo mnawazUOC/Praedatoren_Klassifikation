@@ -7,14 +7,22 @@ import cv2
 from PIL import Image
 from datetime import datetime
 
-# 1. Pfad zum Ordner mit den Originalbildern
-input_folder = '/home/surkgoun/nabu_flattened/fuchs/'
-
-# 2. Pfad zum Speicherordner für die ausgewählten besten Bilder
-output_folder = '/home/surkgoun/nabu_keyframes/fuchs/'
+# --- Pfad-Konfiguration (Auf relative Pfade umgestellt) ---
+# 1. Aktuelles Verzeichnis des Skripts ermitteln
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-# 3. Zeitintervall für Serienaufnahmen (in Sekunden)
+# 2. Pfad zum Ordner mit den Originalbildern (2 Ebenen nach oben, dann in data/raw)
+input_folder = os.path.join(current_dir, '../../data/raw/fuchs/')
+
+# 3. Pfad zum Speicherordner für die ausgewählten besten Bilder
+output_folder = os.path.join(current_dir, '../../data/processed/fuchs/')
+
+# Sicherstellen, dass der Ausgabeordner existiert (Error-Prävention)
+os.makedirs(output_folder, exist_ok=True)
+
+
+# 4. Zeitintervall für Serienaufnahmen (in Sekunden)
 # Wenn der Zeitabstand zwischen zwei Bildern kleiner als dieser Wert ist,
 # werden sie als ein zusammengehörige Serie betrachtet.
 burst_gap_seconds = 1.0 # 10 Sekunden ->> 1 Sekunde
@@ -46,12 +54,12 @@ def get_sharpness(img_path):
 
 # ==========
 
-# 4. Alle Bilddateien auflisten
+# 5. Alle Bilddateien auflisten
 image_files = [file for file in os.listdir(input_folder) if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
 print(f"Starte die Analyse von {len(image_files)} Bildern zur Auswahl der besten Aufnahmen.")
 
-# 5. Liste für Dateiinformationen erstellen
+# 6. Liste für Dateiinformationen erstellen
 file_data = []
 
 for file in image_files:
@@ -66,10 +74,10 @@ for file in image_files:
         dt = datetime.fromtimestamp(timestamp)
         file_data.append({'name': file, 'path': input_path, 'time': dt})
 
-# 6. Chronologisch sortieren (Sehr wichtig für die Gruppierung)
+# 7. Chronologisch sortieren (Sehr wichtig für die Gruppierung)
 file_data.sort(key=lambda x: x['time'])
 
-# 7. Gruppierung und Auswahl
+# 8. Gruppierung und Auswahl
 if not file_data:
     print("Keine Bilder im Ordner gefunden.")
     exit()
@@ -79,7 +87,7 @@ selected_count = 0 # Anzahl der ausgewählten besten Bilder
 
 print("Verarbeitung läuft...")
 
-# 8. Ab dem zweiten Bild vergleichen
+# 9. Ab dem zweiten Bild vergleichen
 for i in range(1, len(file_data)):
     prev_img = file_data[i-1]
     cur_img = file_data[i]
@@ -112,7 +120,7 @@ for i in range(1, len(file_data)):
         # Neue Gruppe starten
         current_series = [cur_img]
 
-# 9. The Last Piece
+# 10. The Last Piece
 # Verarbeitung der letzten Gruppe nach dem Ende der Schleife
 # Da es nach dem letzten Bild kein nächstes Bild gibt,
 # muss die letzte Gruppe manuell nach der Schleife gespeichert werden.
