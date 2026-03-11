@@ -133,7 +133,7 @@ def sanity_check():
     if num_classes == 14:
         print("Phase 1 (Sanity Check) bestanden - Bereit für Analyse") # Erwarteter Output
     else:
-        print(f"[Sanity Check] fehlgeschlagen. Es wurden {num_classes} Klassen gefunden. Es sollte 17 Klassen geben.")
+        print(f"[Sanity Check] fehlgeschlagen. Es wurden {num_classes} Klassen gefunden. Es sollte 14 Klassen geben.")
         print("Bitte Datenordner überprüfen. (Fehlen Unterordner?)")
 
 if __name__ == "__main__":
