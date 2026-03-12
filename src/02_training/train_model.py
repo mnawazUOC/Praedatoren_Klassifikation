@@ -19,19 +19,24 @@ Update: 05.01.2026
 2. Data Augmentation zur Kompensation der geringen Datenmenge.
 3. Einführung eines 2-Phasen-Trainings (Head-Training + Fine-Tuning
 
-Update: 08.01. 2026 (Fix Class Imbalance)
+Update: 08.01.2026 (Fix Class Imbalance)
 Integration von Class Weights, um das Ungleichgewicht der Daten (z.B.viele Fuchs, wenig Dachs) auszugleichen.
+
+Update: 12.03.2026 (Refactoring auf Keras 3 Standard)
+Umstellung im gesamten Skript: Ersetzt von tf.kears durch das keras-Paket.
 """
 
 import os # Für Betriebssystem-Operationen (z.B. Dateipfade)
 import numpy as np # für numerische Berechnungen
+
 import tensorflow as tf # tensorflow Version: 2.20.0
 import keras
 from keras import layers, optimizers, callbacks # Keras-Komponenten
+from keras.utils import image_dataset_from_directory
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight # Für die Berechnung der Klassengewichte
-from keras.utils import image_dataset_from_directory
 
 # ===== Einstellung
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -123,7 +128,7 @@ def build_resnet(class_names):
 
     # Step 1: Initialisierung beider Modelle (ResNet50-Modell A und ResNet50-Modell B)
     # ResNet50-Modell A (Base Model, "Der Empfänger")
-    base_model = tf.keras.applications.ResNet50(
+    base_model = keras.applications.ResNet50(
         weights = 'imagenet', # Nutzt vortrainierte Gewichte aus ImageNet (Transfer Learning)
         include_top = False, # entfernt den originalen Klassifikations-Layers (Ich baue einen eigenen)
         input_shape = (IMG_SIZE[0], IMG_SIZE[1], 3) # Erwartete Bildgröße (224x224 Pixel) und 3 Farbkanäle (RGB)
@@ -135,7 +140,7 @@ def build_resnet(class_names):
     # Lädt ein zweites ResNet50-Modell (diesmal MIT Top-Layer) als Referenz
     # ResNet50-Modell B (Reference Model, "Der Wissensspender")
     print("Extrahiere Gewichte aus ResNet50-Referenzmodell...")
-    ref_model = tf.keras.applications.ResNet50(
+    ref_model = keras.applications.ResNet50(
         weights = 'imagenet',
         include_top = True # Lädt das Modell mit dem Klassifikations-Kopf (um Gewicht zu extrahieren)
     )
@@ -186,17 +191,17 @@ def build_resnet(class_names):
     print("-"*50)
 
     # Daten Augmentation
-    data_augmentation = tf.keras.Sequential([
+    data_augmentation = keras.Sequential([
         layers.RandomFlip('horizontal'),
     ], name="data_augmentation")
 
     # Definiert den Input-Layer des Modells (Bildgröße + 3 RGB)
-    inputs = tf.keras.Input(shape=(IMG_SIZE[0], IMG_SIZE[1], 3))
+    inputs = keras.Input(shape=(IMG_SIZE[0], IMG_SIZE[1], 3))
 
     x = data_augmentation(inputs)
 
     # Wendet die ResNEt50 auf die Bilder an
-    x = tf.keras.applications.resnet50.preprocess_input(x)
+    x = keras.applications.resnet50.preprocess_input(x)
     # Leitet die Daten durch das Basis-Modell
     x = base_model(x, training=False) # training=False: Jetzt ist keine Lernzeit (Training), sondern Prüfungszeit
     # Reduziert die Dimensionen durch Global Average Pooling (2048 Feature)
@@ -209,7 +214,7 @@ def build_resnet(class_names):
     output = layers.Dense(NUM_CLASSES, activation='softmax', name='custom_head')(x)
 
     # Baut das Modell zusammen (Input -> Output)
-    model = tf.keras.Model(inputs, output)
+    model = keras.Model(inputs, output)
 
     # Setzt die manuell vorbereiteten Gewicht (Weigt Reusing) in den Output-Layer ein
     model.get_layer('custom_head').set_weights([new_weights, new_bias])
@@ -298,7 +303,7 @@ def main():
         class_weight = class_weight_dict,   # Gewichtung der Klassen
         callbacks = [
             # EarlyStopping: Stoppt, wenn val_loss 5 Epochen lang nicht sinkt
-            tf.keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True),
+            keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True),
         ]
     )
 
