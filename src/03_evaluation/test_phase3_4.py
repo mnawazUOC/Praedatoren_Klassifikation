@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 #  Definiert den Pfad zur trainierten Modelldatei
-MODEL_PATH = os.path.join(current_dir, '../model/20260112/final_nabu_resnet_20260112(1).keras')
+MODEL_PATH = os.path.abspath(os.path.join(current_dir, '../../models/final_nabu_resnet.keras'))
 
 # Definiert den Pfad zum Ordner mit der Validierung
-VALIDATION_DIR = os.path.join(current_dir, '../nabu_split/validation')
+VALIDATION_DIR = os.path.abspath(os.path.join(current_dir, '../../data/nabu_split/validation'))
 
 # Ausgabeordner für die Ergebnisse (wird im Projektordner erstellt)
-OUTPUT_DIR = os.path.join(current_dir, '../evaluation/')
+OUTPUT_DIR = os.path.abspath(os.path.join(current_dir, '../../evaluation/'))
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Legt die Höhe der Bilder fest, die das Modell erwartet (224 Pixel)

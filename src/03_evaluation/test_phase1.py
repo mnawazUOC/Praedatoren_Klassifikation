@@ -16,7 +16,7 @@ import numpy as np # Für Array-Operationen im shuffle-Check
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # ===== Einstellung =====
-DATA_DIR = os.path.join(current_dir, '../nabu_split/')
+DATA_DIR = os.path.abspath(os.path.join(current_dir, '../../data/nabu_split/'))
 
 # Die Bildgröße, die das Modell erwartet (224x224 Pixel)
 IMG_SIZE = (224, 224)
@@ -26,7 +26,7 @@ BATCH_SIZE = 32
 
 # Pfad zur gespeicherten Modelldatei (.keras Format)
 # Der Dateiname muss exakt stimmen
-MODEL_PATH = os.path.join(current_dir, '../model/final_nabu_resnet_20251216.keras')
+MODEL_PATH = os.path.abspath(os.path.join(current_dir, '../../models/final_nabu_resnet.keras'))
 # ===== Einstellung ist abgeschlossen =====
 
 # ===== Funktion =====
