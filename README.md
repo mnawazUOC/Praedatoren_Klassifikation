@@ -113,7 +113,7 @@ Class Weights: Automatischer Ausgleich von Klassenimbalancen während des Traini
 Bash
 python src/02_training/train_model.py
 ```
-
+---
 ### **Schritt 3: Evaluation und Validierung**
 <div align="justify">
 Führt eine umfassende Qualitätssicherung in vier Phasen durch:
@@ -146,6 +146,7 @@ python src/03_evaluation/test_phase3_4.py
 ```
 Alle Ergebnisse werden automatisch im Ordner evaluation/ gespeichert.
 
+---
 ### **Schritt 4: Deployment (Interaktive Anwendung)**
 Starten Sie die Streamlit-Anwendung für die interaktive Modellinferenz:
 <br></br>
