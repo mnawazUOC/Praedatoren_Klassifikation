@@ -4,7 +4,7 @@
 Dieses Repository enthält eine Pipeline zur effizienten Filterung und Vorverarbeitung von Bilddaten der NABU-Wildkameras. Das Hauptziel ist es, die optimalen Frames aus Serienaufnahmen (Bursts) zu extrahieren und störende Metadaten-Bereiche zu entfernen, um einen hochwertigen Trainingsdatensatz für die Wildtierklassifikation zu erstellen.
 </div>
 
-## **Wichtiger Hinweis zur Datenvorbereitung (Manuelle Sortierung)**
+## **$\color{red}{Wichtiger Hinweis zur Datenvorbereitung (Manuelle Sortierung)}$**
 <div align="justify">
 <b>ACHTUNG:</b> Die von NABU bereitgestellten Originalbilder sind unstrukturiert und enthalten oft tief verschachtelte Unterordner (Ordner innerhalb von Ordnern). Da die Pipeline eine klare Struktur erwartet, müssen die Daten <b>zwingend manuell</b> vorbereitet werden:
 <br></br>
@@ -16,7 +16,7 @@ Ohne diese manuelle Konsolidierung der Daten kann die Pipeline die Bilder nicht 
 </div>
 
 
-## Verzeichnisstruktur
+## $\color{blue}{Verzeichnisstruktur}$
 <div align="justify">
 Alle Skripte arbeiten mit relativen Pfaden und setzen die folgende Standard-Struktur voraus. Der Ordner data/raw/ muss manuell erstellt und mit Daten gefüllt werden; alle anderen Verzeichnisse werden bei Bedarf automatisch von den Skripten generiert.
 </div>
@@ -40,12 +40,12 @@ ROOT/
 
 ```
 
-## **Workflow: Ausführung der Pipeline**
+## **$\color{blue}{Workflow: Ausführung der Pipeline}$**
 <div align="justify">
 Führen Sie die Skripte in der folgenden Reihenfolge aus, um das Projekt zu reproduzieren oder neue Daten zu verarbeiten.
 </div>
 
-### **Schritt 1: Datenvorverarbeitung (Preprocessing)**
+### **$\color{green}{Schritt 1: Datenvorverarbeitung (Preprocessing)}$**
 <div align="justify">
 Wichtig:<br></br>
 Bevor Sie dieses Skript zum ersten Mal ausführen, müssen Sie input_folder und output_folder innerhalb der Datei 01_select_best_shot.py manuell an die Tierart anpassen, die Sie gerade verarbeiten möchten.
@@ -99,7 +99,7 @@ python src/01_preprocessing/03_split_dataset_v2.py
 
 ---
 
-### **Schritt 2: Modelltraining (Training)**
+### **$\color{green}{Schritt 2: Modelltraining (Training)}$**
 <div align="justify">
 Trainiert ein ResNet50-Modell auf Basis des vorbereiteten nabu_split Datensatzes.
 <br></br>
@@ -114,7 +114,7 @@ Bash
 python src/02_training/train_model.py
 ```
 ---
-### **Schritt 3: Evaluation und Validierung**
+### **$\color{green}{Schritt 3: Evaluation und Validierung}$**
 <div align="justify">
 Führt eine umfassende Qualitätssicherung in vier Phasen durch:
 
@@ -147,7 +147,7 @@ python src/03_evaluation/test_phase3_4.py
 Alle Ergebnisse werden automatisch im Ordner evaluation/ gespeichert.
 
 ---
-### **Schritt 4: Deployment (Interaktive Anwendung)**
+### **$\color{green}{Schritt 4: Deployment (Interaktive Anwendung)}$**
 Starten Sie die Streamlit-Anwendung für die interaktive Modellinferenz:
 <br></br>
 ```
