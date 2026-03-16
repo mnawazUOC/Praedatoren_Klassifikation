@@ -148,8 +148,13 @@ Alle Ergebnisse werden automatisch im Ordner evaluation/ gespeichert.
 
 ---
 ### **$\color{green}{Schritt 4: Deployment (Interaktive Anwendung)}$**
-Starten Sie die Streamlit-Anwendung für die interaktive Modellinferenz:
+<div align="justify">
+Wichtiger Hinweis:<br></br>
+Die Dateien model.keras und logo.jpg müssen sich zwingend im selben Ordner befinden, damit die Anwendung ordnungsgemäß geladen werden kann. <br></br>
+Starten Sie die Streamlit-Anwendung für die interaktive Modellinferenz.
+</div>
 <br></br>
+
 ```
 Bash
 python -m streamlit run src/04_deployment/streamlit_app.py
