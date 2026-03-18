@@ -40,7 +40,7 @@ from sklearn.utils import class_weight # Für die Berechnung der Klassengewichte
 
 # ===== Einstellung
 current_dir = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.abspath(os.path.join(current_dir, '../../data/nabu_split/')# Pfad zum Trainingsdatensatz
+DATA_DIR = os.path.abspath(os.path.join(current_dir, '../../data/nabu_split/')) # Pfad zum Trainingsdatensatz
 
 # Legt die Bildgröße fest (Standard: 224x224 Pixel)
 IMG_SIZE = (224, 224)
@@ -152,9 +152,8 @@ def build_resnet(class_names):
 
     # Erstellt leere Matrizen für die neuen Gewichte (shape: 2048x17)
     # 2048: Merkmale. Ein Beispiel dafür: Sind die Ohren spitz?
-    # 17: Tierarten
     new_weights = np.zeros((2048, len(class_names))) # ein NumPy-Array (Matrix) mit 2048 Zeilen und 17 Spalten
-    # Erstellt leere Matrizen für die neuen Bias-Werte (shape: 17)
+    # Erstellt leere Matrizen für die neuen Bias-Werte
     new_bias = np.zeros(len(class_names))
 
     # Gibt eine Überschrift für die folgende Tabelle aus
@@ -162,7 +161,7 @@ def build_resnet(class_names):
     print(f"{'NABU Klasse':<20} | {'Strategie':<20} | {'ImageNet-ID'}")
     print("-"*50)
 
-    # Step 2: Iteration über alle 17 Tierarten und Prüfung der IMAGENET_MAP-Tabelle
+    # Step 2: Iteration über alle Tierarten und Prüfung der IMAGENET_MAP-Tabelle
     # Schleife über alle Tierarten, um die Gewichte zuzuweisen
     for i, class_name in enumerate(class_names):
         # Mapping prüfen
@@ -209,7 +208,7 @@ def build_resnet(class_names):
     # Fügt Dropout hinzu, um Overfitting zu verhindern
     x = layers.Dropout(0.5)(x) # 0.2 -> 0.5
 
-    # Erstellt den Output-Layer mit 17 Neuronen (für 17 Tierarten)
+    # Erstellt den Output-Layer mit Neuronen
     # 'softmax' wandelt die Ausgabe in Wahrscheinlichkeit um
     output = layers.Dense(NUM_CLASSES, activation='softmax', name='custom_head')(x)
 
