@@ -1,11 +1,14 @@
+# Update: 18.03.2026
+# Sliding-Window-Funktionalität entfernt und
+# lokalen Datenimport für große Datensätze (>2GB) hinzugefügt.
+
 import io
 import os
 import streamlit as st
-import keras
+import tensorflow as tf
 import pandas as pd  # excel
 import numpy as np
 from PIL import Image  # pillow-Bibliothek für die Bildverarbeitung (öffnen, resizing)
-from streamlit.runtime.uploaded_file_manager import UploadedFile
 from streamlit_cropper import st_cropper
 
 # =====
@@ -70,11 +73,11 @@ st.markdown("""
 
     /* --- CUSTOM SECTION HEADER (Überschriften) --- */
     .custom-header {
-        background-color: #F4F8FB;
+        background-color: #F4F8FB; 
         border-left: 5px solid #009EE3; /* NABU Blau */
         padding: 12px 15px;
-        border-radius: 0 8px 8px 0;
-        color: #193256;
+        border-radius: 0 8px 8px 0; 
+        color: #193256; 
         font-size: 18px;
         font-weight: 700;
         margin-bottom: 15px;
@@ -93,17 +96,17 @@ st.markdown("""
 
     /* --- BUTTON-DESIGN --- */
     div.stButton > button {
-        background-color: #009EE3;
-        color: white;
-        border-radius: 8px;
-        font-weight: bold;
-        width: 100%;
-        border: none;
-        padding: 12px;
-        transition: 0.2s;
+        background-color: #009EE3; 
+        color: white; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        width: 100%; 
+        border: none; 
+        padding: 12px; 
+        transition: 0.2s; 
     }
-    div.stButton > button:hover {
-        background-color: #0077AA;
+    div.stButton > button:hover { 
+        background-color: #0077AA; 
     }
 
     div.stButton > button[kind="primary"] {
@@ -165,7 +168,7 @@ CLASS_NAMES = [
 @st.cache_resource
 def load_model():
     try:
-        return keras.models.load_model(MODEL_PATH)
+        return tf.keras.models.load_model(MODEL_PATH)
     except Exception as e:
         st.error(f"Fehler beim Laden des Modells: {e}")
         return None
@@ -206,57 +209,6 @@ def predict_image(image):
         )
 
     return results
-
-# ---------------------------------------------------------
-# sliding-window-Algorithmus für batch-Verarbeitung
-# ---------------------------------------------------------
-def predict_image_sliding_window(image, window_size=(224, 224), step_size=168):
-    """
-    :param image: Das Image Objekt (RGB).
-    :param window_size: Größe des Eingabefensters für das Modell.
-    :param step_size: Die Schrittweite des Fensters. 168px bedeutet 25% Überlappung.
-    :um Objekte am Rand nicht zu verpassen.
-    :return: best_result
-    """
-    width, height = image.size
-    best_result = None
-    best_score = -1.0
-
-    # Wenn da Bild kleiner als das Fenster (224x224) ist,
-    # normale Vorhersagen (predict_image) nutzen.
-    if width < window_size[0] or height < window_size[1]:
-        return predict_image(image)
-
-    # Schleife über die y-Achse (Höhe)
-    for y in range(0, height - window_size[1] + 1, step_size):
-        # Schleife über die x-Achse (Breite)
-        for x in range(0, width - window_size[0] + 1, step_size):
-            # 1. Ausschnitt erstellen (crop)
-            # Kordinaten: (links,, oben, rechts, unten)
-            patch = image.crop((x, y, x + window_size[0], y + window_size[1]))
-
-            # 2. Vorhersage für diesen Ausschnitt durchführen
-            try:
-                result = predict_image(patch)
-
-                # Das Ergebnis ist eine Liste von Dicts.
-                # Ich nehme das Top-1 Ergebnis
-                if result:
-                    top_score = result[0]["score"]
-                    if top_score > best_score:
-                        best_score = top_score
-                        best_result = result
-
-            except Exception:
-                # Falls ein Fehler auftritt, ignorieren wir diesen Patch.
-                # Das Modell kann nicht auf dieses Bild anwenden.
-                pass
-
-    # Falls kein valides Ergebnis gefunden wurde (z.B. technischer Fehler)
-    if best_result is None:
-        return predict_image(image)
-
-    return best_result
 
 # ---------------------------------------------------------
 # Helper Funktion für konsistente HTML-Überschriften
@@ -319,7 +271,7 @@ def page_home():
 
         /* Willkommens-Überschrift (Links) - Bleibt NABU-Grün */
         .welcome-title {
-            font-size: 2.8rem;
+            font-size: 2.8rem; 
             font-weight: 900;
             color: #009640 !important; /* NABU Green */
             margin-bottom: 20px;
@@ -350,7 +302,7 @@ def page_home():
             color: var(--text-color) !important;
 
             /* Rahmen: Neutrales, halb-transparentes Grau für bessere Sichtbarkeit */
-            border: 1px solid #a0a0a080 !important;
+            border: 1px solid #a0a0a080 !important; 
 
             padding: 6px 14px;
             border-radius: 4px;
@@ -460,7 +412,7 @@ def page_home():
             <div class="feature-item">
                 <span class="feature-name">📷  Einzelbild-Analyse</span>
                 <span class="feature-desc">
-                    Laden Sie ein einzelnes Foto hoch, um das Ergebnis sofort zu überprüfen.
+                    Laden Sie ein einzelnes Foto hoch, um das Ergebnis sofort zu überprüfen. 
                     Ideal für schnelle Tests.
                 </span>
             </div>
@@ -468,7 +420,7 @@ def page_home():
             <div class="feature-item">
                 <span class="feature-name">📂  Batch-Modus</span>
                 <span class="feature-desc">
-                    Analysieren Sie komplette Ordnerinhalte (z.B. SD-Karten).
+                    Analysieren Sie komplette Ordnerinhalte (z.B. SD-Karten). 
                     Leere Bilder werden gefiltert und Ergebnisse als Excel exportiert.
                 </span>
             </div>
@@ -643,22 +595,22 @@ def page_single_analysis():
 
                     st.markdown(f"""
                                         <div style="
-                                            background-color: #e0e0e0;
-                                            border-radius: 15px;
-                                            height: 30px;
+                                            background-color: #e0e0e0; 
+                                            border-radius: 15px; 
+                                            height: 30px; 
                                             width: 100%;
                                             margin-bottom: 20px;
                                             overflow: hidden;
                                         ">
                                             <div style="
-                                                width: {score_pct}%;
-                                                background-color: {bar_color};
-                                                height: 100%;
-                                                border-radius: 15px;
-                                                text-align: right;
-                                                line-height: 30px;
-                                                padding-right: 15px;
-                                                color: white;
+                                                width: {score_pct}%; 
+                                                background-color: {bar_color}; 
+                                                height: 100%; 
+                                                border-radius: 15px; 
+                                                text-align: right; 
+                                                line-height: 30px; 
+                                                padding-right: 15px; 
+                                                color: white; 
                                                 font-weight: bold;
                                                 font-family: sans-serif;
                                                 white-space: nowrap;
@@ -695,7 +647,7 @@ def page_single_analysis():
 
 
 # =====
-# 4. Seite 2: Batch-Modus mit Top-3 Ergebnissen
+# 4. Seite 2: Batch-Modus mit Top-3 Ergebnissen (Optimiert für große Datenmengen)
 # =====
 def page_batch_analysis():
     st.session_state["last_page"] = "batch"
@@ -708,23 +660,21 @@ def page_batch_analysis():
     """, unsafe_allow_html=True
                 )
 
-    # Logik: Initialisierung eds dynamischen Schlüssels (Session State)
-    # Dies ist notwendig, um das file_uploader-widget programmgesteuert zurückzusetzen
+    # Logik: Initialisierung des dynamischen Schlüssels (Session State)
     if "uploader_key" not in st.session_state:
         st.session_state["uploader_key"] = 0
 
-    # callback-Funktion zum Zurücksetzen des file_uploader-widgets.
-    # erhöht den Schlüsselwert, wodurch streamlit das Widget neu rendert und leert
+    # callback-Funktion zum Zurücksetzen
     def clear_upload_state():
         st.session_state["uploader_key"] += 1
-        # Wichtig
-        # auch die gespeicherten Ergebnisse löschen
+        # Wichtig: auch die gespeicherten Ergebnisse löschen
         if "batch_results" in st.session_state:
             del st.session_state["batch_results"]
+        # Ordner-Pfad zurücksetzen
+        if "local_dir" in st.session_state:
+            st.session_state["local_dir"] = ""
 
     # Layout: Zweispaltig
-    # Linke Spalte(1 Teil): Batch Upload-Bild-Feld
-    # Rechte Spalte(1.2 Teile): Ergebnis-Feld
     col_upload, col_result = st.columns([1, 1.2], gap="large")
 
     # --- Linke Spalte: Batch Upload-Feld
@@ -750,38 +700,77 @@ def page_batch_analysis():
                     step=1,
                     help="Wenn die Wahrscheinlichkeit unter diesem Wert liegt, wird das Bild als 'Kein Prädator' markiert."
                 )
-                st.write("")  # Abstand
-
-                # 2. sliding window-Algorithmus auswählen
-                st.markdown("**Smart Scan (optional):**")
-                use_sliding_window = st.toggle(
-                    "🔍 Smart Scan aktivieren (Sliding Window)",
-                    value=False,
-                    help="Empfohlen für Weitwinkelaufnahmen. Das Bild wird rasterartig abgesucht, um kleine Objekte zu finden. (Rechenintensiv)"
-                )
-
                 st.write("")
 
-            # 3. Datei-Upload
-            uploaded_files = st.file_uploader(
-                "Bitte Bilddateien hochladen (JPG, PNG)",
-                type=['jpg', 'png'],
-                accept_multiple_files=True,
-                key=f"batch_{st.session_state['uploader_key']}"
-            )
+
+            # ---------------------------------------------------------
+            # NEU: Datenquelle auswählen (Browser vs. Lokaler Pfad für >2GB)
+            # ---------------------------------------------------------
+            data_source = st.radio("Lademethode wählen:",
+                                   ["Dateien hochladen (Browser)", "Lokaler Ordner-Pfad (> 2GB)"])
+
+            files_to_process = []
+            is_local_mode = False
+
+            if data_source == "Lokaler Ordner-Pfad (> 2GB)":
+                st.warning("⚠️ Empfohlen für große Datenmengen. Die Dateien verbleiben auf Ihrer Festplatte.")
+
+                # Nutzung von tkinter für einen Betriebssystem-Dialog (Verzeichnisauswahl)
+                import tkinter as tk
+                from tkinter import filedialog
+
+                # Initialisierung des Session-State zur persistenten Speicherung des Pfads
+                if "local_dir" not in st.session_state:
+                    st.session_state["local_dir"] = ""
+
+                col_dir_btn, col_dir_text = st.columns([1, 1.5])
+
+                with col_dir_btn:
+                    if st.button("📁 Ordner auswählen"):
+                        root = tk.Tk()
+                        # Versteckt das leere Hauptfenster von tkinter
+                        root.withdraw()
+                        # Setzt den Fokus des Dialogfensters in den Vordergrund (always on top)
+                        root.wm_attributes('-topmost', 1)
+                        # Öffnet den Verzeichnisauswahldialog und speichert den gewählten Pfad
+                        folder_path = filedialog.askdirectory(master=root, title="Bitte Bilder-Ordner auswählen")
+                        # Um Ressourcen freizugeben
+                        root.destroy()
+
+                        # Speichert den Pfad im Streamlit-Session-State
+                        if folder_path:
+                            st.session_state["local_dir"] = folder_path
+
+                with col_dir_text:
+                    if st.session_state["local_dir"]:
+                        st.info(f"{st.session_state['local_dir']}")
+                # ---------------------------------------------------------
+
+                if st.session_state["local_dir"] and os.path.isdir(st.session_state["local_dir"]):
+                    files_to_process = [os.path.join(st.session_state["local_dir"], fname) for fname in
+                                        os.listdir(st.session_state["local_dir"])
+                                        if fname.lower().endswith(('.jpg', '.jpeg', '.png'))]
+                    is_local_mode = True
+            else:
+                uploaded_files = st.file_uploader(
+                    "Bitte Bilddateien hochladen (JPG, PNG)",
+                    type=['jpg', 'png'],
+                    accept_multiple_files=True,
+                    key=f"batch_{st.session_state['uploader_key']}"
+                )
+                if uploaded_files:
+                    files_to_process = uploaded_files
 
             analyse_button = False
 
             # 4. Aktions-Buttons
-            # nur anzeigen, wenn Dateien hochgeladen wurden.
-            if uploaded_files:
+            if files_to_process:
                 st.markdown(f"""
                     <div style="font-size: 18px; font-weight: bold; color: #FF4B4B; margin: 10px 0;">
-                        📂 <span style="color: #009EE3;">{len(uploaded_files)}</span> Dateien ausgewählt.
+                        📂 <span style="color: #009EE3;">{len(files_to_process)}</span> Dateien ausgewählt.
                     </div>
                 """, unsafe_allow_html=True)
 
-                # Buttons nebeneinander anzeigen
                 col_btn1, col_btn2 = st.columns([1, 1])
                 with col_btn1:
                     analyse_button = st.button("🔍 Analysieren", key="btn_analyse", use_container_width=True)
@@ -794,62 +783,35 @@ def page_batch_analysis():
             styled_header("2. Analyseergebnisse")
 
             if analyse_button and model:
-                # Initialisierung des Fortschrittsbalkens
                 progress_bar = st.progress(0, text="Initialisiere...")
-
                 rows = []
-                threshold_decimal = threshold / 100  # Prozent in Dezimalzahl umwandeln
+                threshold_decimal = threshold / 100
 
-                # Schleife über alle hochgeladenen Bilder
-                for i, f in enumerate(uploaded_files):
-                    f: UploadedFile
+                # Schleife über alle ausgewählten Bilder
+                for i, f in enumerate(files_to_process):
                     try:
-                        img = Image.open(f)
-                        # Screenshots (PNG) enthalten oft einen Alphakanal (4 Kanäle: RGBA)
-                        # das Modell erwartet jedoch 3 Kanäle (RGB)
-                        # daher wird das Bild in RGB konvertiert.
+                        # Unterscheidung beim Laden (Pfad vs. UploadedFile)
+                        if is_local_mode:
+                            img = Image.open(f)
+                            file_name_for_df = os.path.basename(f)
+                        else:
+                            img = Image.open(f)
+                            file_name_for_df = f.name
+
                         img = img.convert("RGB")
 
-                        full_predictions = predict_image(img)
-                        top1_full = full_predictions[0]
-
-                        result = full_predictions
-
-                        # ---------------------------------------------------------
-                        # sliding window Algorithmus
-                        # ---------------------------------------------------------
-                        if use_sliding_window and top1_full['score'] < threshold_decimal:
-                            # Option A: sliding window
-                            sliding_prediction = predict_image_sliding_window(img)
-                            top1_sliding = sliding_prediction[0]
-
-                            if top1_sliding['score'] > top1_full['score']:
-                                result = sliding_prediction
-                            else:
-                                result = full_predictions
-                        else:
-                            # Option B: normaler Scan
-                            result = predict_image(img)
-
-                        # Top-1 Ergebnis
+                        result = predict_image(img)
                         top1 = result[0]
                         top1_name = top1['class_name']
                         top1_score = top1['score']
 
-                        # Filterung nicht erkannter Tiere und Leerbilder.
-                        # wenn der Score unter dem Schwellenwert liegt → kein Prädator
                         if top1_score < threshold_decimal:
                             final_result = "Kein Praedator"
-
-                            out_t1_art = "-"
-                            out_t1_score = 0.0
-                            out_t2_art = "-"
-                            out_t2_score = 0.0
-                            out_t3_art = "-"
-                            out_t3_score = 0.0
+                            out_t1_art, out_t1_score = "-", 0.0
+                            out_t2_art, out_t2_score = "-", 0.0
+                            out_t3_art, out_t3_score = "-", 0.0
                         else:
                             final_result = top1_name
-
                             out_t1_art = top1_name
                             out_t1_score = top1_score
                             out_t2_art = result[1]['class_name']
@@ -857,10 +819,9 @@ def page_batch_analysis():
                             out_t3_art = result[2]['class_name']
                             out_t3_score = result[2]['score']
 
-                        # Datensatz erstellen (Top-1, Top-2 und Top-3)
                         rows.append(
                             {
-                                "Datei": f.name,
+                                "Datei": file_name_for_df,
                                 "Finales Ergebnis": final_result,
                                 "Top-1 Art": out_t1_art,
                                 "Top-1 %": out_t1_score,
@@ -870,37 +831,33 @@ def page_batch_analysis():
                                 "Top-3 %": out_t3_score
                             }
                         )
+                        # RAM-Speicher sofort freigeben (Lazy Loading)
+                        del img
+
                     except Exception as e:
-                        st.error(f"Fehler beim Analysieren von {f.name}: {e}")
+                        error_name = os.path.basename(f) if is_local_mode else f.name
+                        st.error(f"Fehler beim Analysieren von {error_name}: {e}")
 
-                    # Fortschrittsbalken aktualisieren
-                    prog = (i + 1) / len(uploaded_files)
-                    progress_bar.progress(prog, text=f"Verarbeite Bild {i + 1}/{len(uploaded_files)}")
+                    prog = (i + 1) / len(files_to_process)
+                    progress_bar.progress(prog, text=f"Verarbeite Bild {i + 1}/{len(files_to_process)}")
 
-                # Balken entfernen nach Abschluss
                 progress_bar.empty()
-
-                # Wichtig: Ergebnis in session state speichern
                 st.session_state["batch_results"] = pd.DataFrame(rows)
                 st.success("✅ Analyse erfolgreich abgeschlossen.")
 
-            # Gespeicherte Ergebnisse anzeigen (auch nach excel Download)
+            # Gespeicherte Ergebnisse anzeigen (Bleibt komplett erhalten)
             if 'batch_results' in st.session_state:
                 df = st.session_state["batch_results"]
 
-                # Statistische Zusammenfassung
                 st.markdown("##### 📈 Zusammenfassung")
                 col_m1, col_m2, col_m3 = st.columns(3)
                 col_m1.metric("Bildanzahl", len(df))
 
-                # Nur tatsächliche Prädatoren berücksichtigen
                 predators_only = df[df["Finales Ergebnis"] != "Kein Praedator"]
 
-                # Durchschnittliche Wahrscheinlichkeit
                 if not predators_only.empty:
                     avg_score = predators_only["Top-1 %"].mean()
                     col_m2.metric("Ø Top-1 Scores", f"{avg_score:.1%}")
-
                     modes = predators_only["Finales Ergebnis"].mode()
                     top_animal = modes[0] if not modes.empty else "-"
                     col_m3.metric("Häufigste Art", top_animal.title())
@@ -910,27 +867,21 @@ def page_batch_analysis():
 
                 st.divider()
 
-                # Detailliste mit visuellen Balken für Top-1, 2, 3
                 st.markdown("##### 📋 Detaillierte Analyseergebnisse (Top 3)")
                 st.dataframe(
                     df,
                     column_config={
                         "Datei": st.column_config.TextColumn("Dateiname", width="medium"),
-                        # Spalten für Top-1
                         "Top-1 Art": st.column_config.TextColumn("🥇 Top-1 Art"),
                         "Top-1 %": st.column_config.ProgressColumn("Score 1", format="%.2f%%", min_value=0,
                                                                    max_value=1),
-                        # Spalten für Top-2
                         "Top-2 Art": st.column_config.TextColumn("🥈 Top-2 Art"),
                         "Top-2 %": st.column_config.ProgressColumn("Score 2", format="%.2f", min_value=0, max_value=1),
-
-                        # Spalten für Top-3
                         "Top-3 Art": st.column_config.TextColumn("🥉 Top-3 Art"),
                         "Top-3 %": st.column_config.ProgressColumn("Score 3", format="%.2f", min_value=0, max_value=1),
                     }, use_container_width=True, height=400
                 )
 
-                # excel-Export
                 st.divider()
 
                 st.markdown("##### 📥 Export")
@@ -940,20 +891,14 @@ def page_batch_analysis():
                     import xlsxwriter
                     buf = io.BytesIO()
                     with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                        df.to_excel(writer,
-                                    index=False,
-                                    sheet_name='Ergebnisse'
-                                    )
-
+                        df.to_excel(writer, index=False, sheet_name='Ergebnisse')
                         workbook = writer.book
                         worksheet = writer.sheets['Ergebnisse']
-
                         percent_format = workbook.add_format({'num_format': '0.00%'})
 
                         worksheet.set_column('D:D', 12, percent_format)
                         worksheet.set_column('F:F', 12, percent_format)
                         worksheet.set_column('H:H', 12, percent_format)
-
                         worksheet.set_column('A:A', 30)
                         worksheet.set_column('B:B', 20)
                         worksheet.set_column('C:C', 20)
@@ -974,9 +919,8 @@ def page_batch_analysis():
                     st.download_button("CSV (.csv)", df.to_csv(index=False).encode('utf-8'), "NABU_Results.csv",
                                        use_container_width=True)
 
-            elif not uploaded_files:
-                st.info("💡 Bitte laden Sie zuerst Bilder auf der linken Seite hoch.")
-
+            elif not files_to_process:
+                st.info("💡 Bitte laden Sie zuerst Bilder auf der linken Seite hoch oder wählen Sie einen Ordner aus.")
 
 # =====
 # 5. NAVIGATION & START
