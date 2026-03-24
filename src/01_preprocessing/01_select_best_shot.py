@@ -2,30 +2,17 @@
 
 import os
 import shutil
+import argparse
 
 import cv2
 from PIL import Image
 from datetime import datetime
 
-# --- Pfad-Konfiguration (Auf relative Pfade umgestellt) ---
-# 1. Aktuelles Verzeichnis des Skripts ermitteln
+# --- Pfad-Konfiguration ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_INPUT = os.path.abspath(os.path.join(current_dir, '../../data/raw'))
+DEFAULT_OUTPUT = os.path.abspath(os.path.join(current_dir, '../../data/processed'))
 
-
-# 2. Pfad zum Ordner mit den Originalbildern (2 Ebenen nach oben, dann in data/raw)
-input_folder = os.path.join(current_dir, '../../data/raw/igel/')
-
-# 3. Pfad zum Speicherordner für die ausgewählten besten Bilder
-output_folder = os.path.join(current_dir, '../../data/processed/igel/')
-
-# Sicherstellen, dass der Ausgabeordner existiert (Error-Prävention)
-os.makedirs(output_folder, exist_ok=True)
-
-
-# 4. Zeitintervall für Serienaufnahmen (in Sekunden)
-# Wenn der Zeitabstand zwischen zwei Bildern kleiner als dieser Wert ist,
-# werden sie als ein zusammengehörige Serie betrachtet.
-burst_gap_seconds = 1.0 # 10 Sekunden ->> 1 Sekunde
 
 # ==========
 # Liest das Aufnahmedatum aus den Exif-Metadaten des Bildes aus.
@@ -54,92 +41,132 @@ def get_sharpness(img_path):
 
 # ==========
 
-# 5. Alle Bilddateien auflisten
-image_files = [file for file in os.listdir(input_folder) if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-print(f"Starte die Analyse von {len(image_files)} Bildern zur Auswahl der besten Aufnahmen.")
+def select_best_shots(input_folder, output_folder, burst_gap_seconds=1.0):
+    """
+    Wählt das schärfste Bild aus jeder Serienaufnahme (Burst) aus.
 
-# 6. Liste für Dateiinformationen erstellen
-file_data = []
+    :param input_folder: Pfad zum Ordner mit den Originalbildern
+    :param output_folder: Pfad zum Speicherordner für die ausgewählten besten Bilder
+    :param burst_gap_seconds: Zeitintervall für Serienaufnahmen (in Sekunden)
+    """
+    # Sicherstellen, dass der Ausgabeordner existiert (Error-Prävention)
+    os.makedirs(output_folder, exist_ok=True)
 
-for file in image_files:
-    input_path = os.path.join(input_folder, file)
-    time_str = get_date(input_path)
+    # Alle Bilddateien auflisten
+    image_files = [file for file in os.listdir(input_folder) if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-    if time_str:
-        dt = datetime.strptime(time_str, '%Y:%m:%d %H:%M:%S')
-        file_data.append({'name': file, 'path': input_path, 'time': dt})
-    else:
-        timestamp = os.path.getmtime(input_path) # Wenn keine Exif-Daten vorhanden sind
-        dt = datetime.fromtimestamp(timestamp)
-        file_data.append({'name': file, 'path': input_path, 'time': dt})
+    print(f"Starte die Analyse von {len(image_files)} Bildern zur Auswahl der besten Aufnahmen.")
 
-# 7. Chronologisch sortieren (Sehr wichtig für die Gruppierung)
-file_data.sort(key=lambda x: x['time'])
+    # Liste für Dateiinformationen erstellen
+    file_data = []
 
-# 8. Gruppierung und Auswahl
-if not file_data:
-    print("Keine Bilder im Ordner gefunden.")
-    exit()
+    for file in image_files:
+        input_path = os.path.join(input_folder, file)
+        time_str = get_date(input_path)
 
-current_series = [file_data[0]]
-selected_count = 0 # Anzahl der ausgewählten besten Bilder
+        if time_str:
+            dt = datetime.strptime(time_str, '%Y:%m:%d %H:%M:%S')
+            file_data.append({'name': file, 'path': input_path, 'time': dt})
+        else:
+            timestamp = os.path.getmtime(input_path) # Wenn keine Exif-Daten vorhanden sind
+            dt = datetime.fromtimestamp(timestamp)
+            file_data.append({'name': file, 'path': input_path, 'time': dt})
 
-print("Verarbeitung läuft...")
+    # Chronologisch sortieren (Sehr wichtig für die Gruppierung)
+    file_data.sort(key=lambda x: x['time'])
 
-# 9. Ab dem zweiten Bild vergleichen
-for i in range(1, len(file_data)):
-    prev_img = file_data[i-1]
-    cur_img = file_data[i]
+    # Gruppierung und Auswahl
+    if not file_data:
+        print("Keine Bilder im Ordner gefunden.")
+        return
 
-    # Zeitdifferenz berechnen (in Sekunden)
-    time_diff = (cur_img['time'] - prev_img['time']).total_seconds()
+    current_series = [file_data[0]]
+    selected_count = 0 # Anzahl der ausgewählten besten Bilder
 
-    if time_diff <= burst_gap_seconds:
-        current_series.append(cur_img) # Zur aktuellen Gruppen hinzufügen (gehört zur gleichen Serie)
-    else: # Die Serie ist beendet. Jetzt, das beste Bild aus der vorherigen Gruppe wählen
+    print("Verarbeitung läuft...")
+
+    # Ab dem zweiten Bild vergleichen
+    for i in range(1, len(file_data)):
+        prev_img = file_data[i-1]
+        cur_img = file_data[i]
+
+        # Zeitdifferenz berechnen (in Sekunden)
+        time_diff = (cur_img['time'] - prev_img['time']).total_seconds()
+
+        if time_diff <= burst_gap_seconds:
+            current_series.append(cur_img) # Zur aktuellen Gruppen hinzufügen (gehört zur gleichen Serie)
+        else: # Die Serie ist beendet. Jetzt, das beste Bild aus der vorherigen Gruppe wählen
+            best_img = None
+            max_score = -1
+            # Der Schärfewert (Laplace-Varianz) ist immer positiv (>=0)
+            # Da -1 kleiner ist als jeder mögliche Schärfewert,
+            # gewinnt das erste Bild sofrt und als aktuelles Maximum gespeichert.
+
+            # Schärfe vergleichen
+            for img_info in current_series:
+                score = get_sharpness(img_info['path'])
+                if score > max_score:
+                    max_score = score
+                    best_img = img_info
+
+            # Das Gewinner-Bild kopieren
+            if best_img:
+                shutil.copy2(best_img['path'], os.path.join(output_folder, best_img['name']))
+                # shutil.copy2: Kopiert das beste Bild in den "output"-Ordner und behält die Metadaten (z.B. Zeitstempel)
+                selected_count += 1
+
+            # Neue Gruppe starten
+            current_series = [cur_img]
+
+    # Verarbeitung der letzten Gruppe nach dem Ende der Schleife
+    # Da es nach dem letzten Bild kein nächstes Bild gibt,
+    # muss die letzte Gruppe manuell nach der Schleife gespeichert werden.
+    if current_series:
         best_img = None
         max_score = -1
-        # Der Schärfewert (Laplace-Varianz) ist immer positiv (>=0)
-        # Da -1 kleiner ist als jeder mögliche Schärfewert,
-        # gewinnt das erste Bild sofrt und als aktuelles Maximum gespeichert.
-
-        # Schärfe vergleichen
         for img_info in current_series:
             score = get_sharpness(img_info['path'])
             if score > max_score:
                 max_score = score
                 best_img = img_info
 
-        # Das Gewinner-Bild kopieren
         if best_img:
             shutil.copy2(best_img['path'], os.path.join(output_folder, best_img['name']))
-            # shutil.copy2: Kopiert das beste Bild in den "output"-Ordner und behält die Metadaten (z.B. Zeitstempel)
             selected_count += 1
 
-        # Neue Gruppe starten
-        current_series = [cur_img]
-
-# 10. The Last Piece
-# Verarbeitung der letzten Gruppe nach dem Ende der Schleife
-# Da es nach dem letzten Bild kein nächstes Bild gibt,
-# muss die letzte Gruppe manuell nach der Schleife gespeichert werden.
-if current_series:
-    best_img = None
-    max_score = -1
-    for img_info in current_series:
-        score = get_sharpness(img_info['path'])
-        if score > max_score:
-            max_score = score
-            best_img = img_info
-
-    if best_img:
-        shutil.copy2(best_img['path'], os.path.join(output_folder, best_img['name']))
-        selected_count += 1
+    print("-" * 30)
+    print("Fertig.")
+    print(f"Ursprüngliche Anzahl: {len(image_files)} Bilder.")
+    print(f"Beste Bilder: {selected_count} Bilder.")
+    print(f"Die Bilder wurden im Ordner '{output_folder}' gespeichert.")
 
 
-print("-" * 30)
-print("Fertig.")
-print(f"Ursprüngliche Anzahl: {len(image_files)} Bilder.")
-print(f"Beste Bilder: {selected_count} Bilder.")
-print(f"Die Bilder wurden im Ordner '{output_folder}' gespeichert.")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Wählt aus jeder Bildserie das schärfste Bild aus."
+    )
+    parser.add_argument("--input", type=str, default=DEFAULT_INPUT,
+                        help="Pfad zum Eingabeverzeichnis mit den Artenordnern")
+    parser.add_argument("--output", type=str, default=DEFAULT_OUTPUT,
+                        help="Pfad zum Ausgabeverzeichnis für ausgewählte Bilder")
+    args = parser.parse_args()
+
+    # Alle Artenverzeichnisse durchlaufen
+    species_list = [d for d in os.listdir(args.input)
+                    if os.path.isdir(os.path.join(args.input, d))]
+
+    if not species_list:
+        print(f"Keine Tierarten-Ordner gefunden in '{args.input}'")
+        exit(1)
+
+    print(f"Gefundene Tierarten: {species_list}\n")
+
+    for species in species_list:
+        input_folder = os.path.join(args.input, species)
+        output_folder = os.path.join(args.output, species)
+        print(f"\n=== Verarbeite: {species} ===")
+        select_best_shots(input_folder, output_folder)
+
+    print("\n" + "=" * 40)
+    print("Alle Verarbeitungen abgeschlossen.")
