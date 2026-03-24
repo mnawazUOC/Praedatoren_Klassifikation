@@ -13,10 +13,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 # 2. Pfad zum Ordner mit den Originalbildern (2 Ebenen nach oben, dann in data/raw)
-input_folder = os.path.join(current_dir, '../../data/raw/fuchs/')
+input_folder = os.path.join(current_dir, '../../data/raw/igel/')
 
 # 3. Pfad zum Speicherordner für die ausgewählten besten Bilder
-output_folder = os.path.join(current_dir, '../../data/processed/fuchs/')
+output_folder = os.path.join(current_dir, '../../data/processed/igel/')
 
 # Sicherstellen, dass der Ausgabeordner existiert (Error-Prävention)
 os.makedirs(output_folder, exist_ok=True)

@@ -8,10 +8,10 @@ import cv2
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # 2. Pfad zum Ordner mit den Originalbildern (Raw Data)
-input_folder = os.path.join(current_dir, '../../data/processed/fuchs/')
+input_folder = os.path.join(current_dir, '../../data/processed/igel/')
 
 # 3. Pfad zum Speicherordner für die bearbeiteten Bilder
-output_folder = os.path.join(current_dir, '../../data/final/fuchs/')
+output_folder = os.path.join(current_dir, '../../data/final/igel/')
 
 # Sicherstellen, dass der Ausgabeordner existiert (Error-Prävention)
 os.makedirs(output_folder, exist_ok=True)
